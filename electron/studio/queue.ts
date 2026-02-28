@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type {
   EnqueueResult,
   GenerationRequest,
+  ModelName,
   ReferenceImagePayload,
   QueueJob,
   Resolution,
@@ -51,7 +52,7 @@ export class GenerationQueue extends EventEmitter {
   enqueue(request: GenerationRequest): EnqueueResult {
     const requestedBatchCount = request.batchCount ?? 1;
     const batchCount = Math.min(MAX_BATCH_COUNT, Math.max(1, requestedBatchCount));
-    const estimatedBatchCost = estimateCost(request.resolution) * batchCount;
+    const estimatedBatchCost = estimateCost(request.resolution, request.model) * batchCount;
     this.assertSpendWithinLimits(estimatedBatchCost);
     const queuedJobIds: string[] = [];
 
@@ -132,7 +133,7 @@ export class GenerationQueue extends EventEmitter {
         throw new Error('Kein API-Schluessel konfiguriert. Oeffne die Einstellungen und hinterlege einen Schluessel.');
       }
 
-      const costEstimate = estimateCost(job.request.resolution);
+      const costEstimate = estimateCost(job.request.resolution, job.request.model);
       this.assertSpendWithinLimits(costEstimate, { excludeQueueJobId: job.id });
 
       const resolvedSystemPrompt = this.resolveSystemPrompt(job.request);
@@ -283,7 +284,7 @@ export class GenerationQueue extends EventEmitter {
         return sum;
       }
 
-      return sum + estimateCost(job.request.resolution);
+      return sum + estimateCost(job.request.resolution, job.request.model);
     }, 0);
   }
 
@@ -313,7 +314,14 @@ function clampConcurrency(value: number): number {
   return Math.min(8, Math.max(1, Math.floor(value)));
 }
 
-export function estimateCost(resolution?: Resolution): number {
+export function estimateCost(resolution?: Resolution, model?: ModelName): number {
+  if (model === 'gemini-3.1-flash-image-preview') {
+    if (resolution === '512px') return 0.045;
+    if (resolution === '2K') return 0.101;
+    if (resolution === '4K') return 0.15;
+    return 0.067; // 1K default
+  }
+
   if (resolution === '4K') {
     return 0.24;
   }

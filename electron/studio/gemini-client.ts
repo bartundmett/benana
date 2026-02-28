@@ -249,6 +249,7 @@ function normalizeResolutionForModel(model: GenerationRequest['model'], resoluti
     return '1K';
   }
 
+  // gemini-3.1-flash-image-preview (Nano Banana 2) and gemini-3-pro-image-preview support all resolutions
   return resolution;
 }
 

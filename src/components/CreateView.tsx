@@ -17,7 +17,8 @@ interface LocalReference extends ReferenceImagePayload {
 
 type ResponseMode = 'imageText' | 'imageOnly';
 
-const ASPECT_RATIOS: AspectRatio[] = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9'];
+const BASE_ASPECT_RATIOS: AspectRatio[] = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9'];
+const NB2_EXTRA_ASPECT_RATIOS: AspectRatio[] = ['1:4', '4:1', '1:8', '8:1'];
 const BATCH_OPTIONS = [1, 2, 4] as const;
 
 export function CreateView() {
@@ -35,7 +36,7 @@ export function CreateView() {
 
   const [prompt, setPrompt] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
-  const [model, setModel] = useState<ModelName>(config?.defaultModel ?? 'gemini-3-pro-image-preview');
+  const [model, setModel] = useState<ModelName>(config?.defaultModel ?? 'gemini-3.1-flash-image-preview');
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1');
   const [resolution, setResolution] = useState<Resolution>('1K');
   const [responseMode, setResponseMode] = useState<ResponseMode>('imageText');
@@ -46,15 +47,15 @@ export function CreateView() {
   const [remixSourceName, setRemixSourceName] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [estimatedCost, setEstimatedCost] = useState<number>(0.134);
+  const [estimatedCost, setEstimatedCost] = useState<number>(0.067);
 
   useEffect(() => {
-    setModel(config?.defaultModel ?? 'gemini-3-pro-image-preview');
+    setModel(config?.defaultModel ?? 'gemini-3.1-flash-image-preview');
   }, [config?.defaultModel]);
 
   useEffect(() => {
-    void window.studio.estimateCost(resolution).then((cost) => setEstimatedCost(cost));
-  }, [resolution]);
+    void window.studio.estimateCost(resolution, model).then((cost) => setEstimatedCost(cost));
+  }, [resolution, model]);
 
   useEffect(() => {
     if (!selectedTemplateId) {
@@ -67,11 +68,22 @@ export function CreateView() {
     }
   }, [promptTemplates, selectedTemplateId]);
 
+  const isNanoBanana2 = model === 'gemini-3.1-flash-image-preview';
   const isProImageModel = model === 'gemini-3-pro-image-preview';
-  const isFlashImageModel = model === 'gemini-2.5-flash-image' || model === 'gemini-2.5-flash-image-preview';
+  const supportsMultiResolution = isNanoBanana2 || isProImageModel;
+  const supportsGoogleSearch = isNanoBanana2 || isProImageModel;
   const resolutionOptions = useMemo(
-    () => (isProImageModel ? (['1K', '2K', '4K'] as Resolution[]) : (['1K'] as Resolution[])),
-    [isProImageModel]
+    () =>
+      isNanoBanana2
+        ? (['512px', '1K', '2K', '4K'] as Resolution[])
+        : isProImageModel
+          ? (['1K', '2K', '4K'] as Resolution[])
+          : (['1K'] as Resolution[]),
+    [isNanoBanana2, isProImageModel]
+  );
+  const aspectRatios = useMemo(
+    () => (isNanoBanana2 ? [...BASE_ASPECT_RATIOS, ...NB2_EXTRA_ASPECT_RATIOS] : BASE_ASPECT_RATIOS),
+    [isNanoBanana2]
   );
 
   useEffect(() => {
@@ -83,12 +95,20 @@ export function CreateView() {
   }, [resolution, resolutionOptions]);
 
   useEffect(() => {
-    if (!isFlashImageModel || !useGoogleSearch) {
+    if (supportsGoogleSearch || !useGoogleSearch) {
       return;
     }
 
     setUseGoogleSearch(false);
-  }, [isFlashImageModel, useGoogleSearch]);
+  }, [supportsGoogleSearch, useGoogleSearch]);
+
+  useEffect(() => {
+    if (aspectRatios.includes(aspectRatio)) {
+      return;
+    }
+
+    setAspectRatio(aspectRatios[0]);
+  }, [aspectRatio, aspectRatios]);
 
   const canGenerate = useMemo(() => {
     return prompt.trim().length > 0 && !isSubmitting && Boolean(activeProjectId);
@@ -370,6 +390,7 @@ export function CreateView() {
               <label>
                 Modell
                 <select value={model} onChange={(event) => setModel(event.target.value as ModelName)}>
+                  <option value="gemini-3.1-flash-image-preview">Nano Banana 2 (Qualität + Geschwindigkeit, 512px–4K)</option>
                   <option value="gemini-3-pro-image-preview">Gemini 3 Pro (Qualität, 1K/2K/4K)</option>
                   <option value="gemini-2.5-flash-image">Gemini 2.5 Flash (Geschwindigkeit, 1K)</option>
                 </select>
@@ -384,13 +405,13 @@ export function CreateView() {
                     </option>
                   ))}
                 </select>
-                {!isProImageModel ? <MutedText as="span">Für Flash Image ist aktuell nur 1K verfügbar.</MutedText> : null}
+                {!supportsMultiResolution ? <MutedText as="span">Für Flash Image ist aktuell nur 1K verfügbar.</MutedText> : null}
               </label>
 
               <label>
                 Seitenverhältnis
                 <select value={aspectRatio} onChange={(event) => setAspectRatio(event.target.value as AspectRatio)}>
-                  {ASPECT_RATIOS.map((ratio) => (
+                  {aspectRatios.map((ratio) => (
                     <option key={ratio} value={ratio}>
                       {ratio}
                     </option>
@@ -442,9 +463,11 @@ export function CreateView() {
               <div className="grid gap-0.4 rounded-md border border-dashed border-border-light-token px-1.2 py-1">
                 <span className="text-sm text-fg-secondary">Thinking</span>
                 <MutedText>
-                  {isProImageModel
-                    ? 'Für Gemini 3 Pro Image wird Thinking automatisch vom Modell gesteuert.'
-                    : 'Für Gemini 2.5 Flash Image nicht verfügbar.'}
+                  {isNanoBanana2
+                    ? 'Nano Banana 2 nutzt Thinking automatisch für bessere Bildkomposition.'
+                    : isProImageModel
+                      ? 'Für Gemini 3 Pro Image wird Thinking automatisch vom Modell gesteuert.'
+                      : 'Für Gemini 2.5 Flash Image nicht verfügbar.'}
                 </MutedText>
               </div>
 
@@ -454,7 +477,7 @@ export function CreateView() {
                   className="w-auto"
                   checked={useGoogleSearch}
                   onChange={(event) => setUseGoogleSearch(event.target.checked)}
-                  disabled={!isProImageModel}
+                  disabled={!supportsGoogleSearch}
                 />
                 Google-Suche als Grounding nutzen
               </label>

@@ -44,7 +44,7 @@ const SLIDES: OnboardingSlide[] = [
 export function OnboardingFlow() {
   const [slideIndex, setSlideIndex] = useState(0);
   const [apiKey, setApiKey] = useState('');
-  const [model, setModel] = useState<ModelName>('gemini-3-pro-image-preview');
+  const [model, setModel] = useState<ModelName>('gemini-3.1-flash-image-preview');
   const [validationState, setValidationState] = useState<
     'idle' | 'validating' | 'valid' | 'invalid' | 'saving'
   >('idle');
@@ -226,6 +226,7 @@ export function OnboardingFlow() {
                 value={model}
                 onChange={(event) => setModel(event.target.value as ModelName)}
               >
+                <option value="gemini-3.1-flash-image-preview">Nano Banana 2</option>
                 <option value="gemini-3-pro-image-preview">Gemini 3 Pro Image</option>
                 <option value="gemini-2.5-flash-image">Gemini 2.5 Flash Image</option>
               </select>

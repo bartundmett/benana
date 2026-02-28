@@ -81,7 +81,7 @@ declare global {
       pauseQueue: () => Promise<boolean>;
       resumeQueue: () => Promise<boolean>;
       cancelQueueJob: (jobId: string) => Promise<boolean>;
-      estimateCost: (resolution?: GenerationRequest['resolution']) => Promise<number>;
+      estimateCost: (resolution?: GenerationRequest['resolution'], model?: GenerationRequest['model']) => Promise<number>;
       getSessionCost: (window?: 'day' | 'month' | 'all') => Promise<number>;
       openExternal: (url: string) => Promise<void>;
       showItemInFolder: (filePath: string) => Promise<boolean>;
