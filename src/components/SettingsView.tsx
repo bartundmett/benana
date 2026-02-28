@@ -149,6 +149,7 @@ export function SettingsView() {
               <label>
                 Standardmodell
                 <select value={defaultModel} onChange={(event) => setDefaultModel(event.target.value as ModelName)}>
+                  <option value="gemini-3.1-flash-image-preview">Nano Banana 2</option>
                   <option value="gemini-3-pro-image-preview">Gemini 3 Pro Image</option>
                   <option value="gemini-2.5-flash-image">Gemini 2.5 Flash Image</option>
                 </select>

@@ -17,7 +17,7 @@ interface StudioConfigFile {
 }
 
 const DEFAULT_CONFIG: Required<Omit<StudioConfigFile, 'encryptedApiKey'>> = {
-  defaultModel: 'gemini-3-pro-image-preview',
+  defaultModel: 'gemini-3.1-flash-image-preview',
   theme: 'dark',
   onboardingCompleted: false,
   queueConcurrency: 2,

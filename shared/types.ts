@@ -1,4 +1,5 @@
 export type ModelName =
+  | 'gemini-3.1-flash-image-preview'
   | 'gemini-3-pro-image-preview'
   | 'gemini-2.5-flash-image'
   | 'gemini-2.5-flash-image-preview';
@@ -11,11 +12,15 @@ export type AspectRatio =
   | '4:3'
   | '4:5'
   | '5:4'
+  | '1:4'
+  | '1:8'
+  | '4:1'
+  | '8:1'
   | '9:16'
   | '16:9'
   | '21:9';
 
-export type Resolution = '1K' | '2K' | '4K';
+export type Resolution = '512px' | '1K' | '2K' | '4K';
 
 export type ThinkingLevel = 'none' | 'low' | 'medium' | 'high';
 

@@ -43,6 +43,7 @@ const ALLOWED_CONFIG_PATCH_KEYS = new Set([
 ]);
 
 const ALLOWED_MODELS = new Set([
+  'gemini-3.1-flash-image-preview',
   'gemini-3-pro-image-preview',
   'gemini-2.5-flash-image',
   'gemini-2.5-flash-image-preview'
@@ -56,12 +57,16 @@ const ALLOWED_ASPECT_RATIOS = new Set([
   '4:3',
   '4:5',
   '5:4',
+  '1:4',
+  '1:8',
+  '4:1',
+  '8:1',
   '9:16',
   '16:9',
   '21:9'
 ]);
 
-const ALLOWED_RESOLUTIONS = new Set(['1K', '2K', '4K']);
+const ALLOWED_RESOLUTIONS = new Set(['512px', '1K', '2K', '4K']);
 const ALLOWED_THINKING_LEVELS = new Set(['none', 'low', 'medium', 'high']);
 const ALLOWED_REFERENCE_LABELS = new Set(['person', 'object', 'style']);
 const ALLOWED_RESPONSE_MODALITIES = new Set(['TEXT', 'IMAGE']);
@@ -552,8 +557,8 @@ export function registerStudioIpcHandlers(services: StudioIpcServices): void {
     return database.getSessionCost(window);
   });
 
-  ipcMain.handle('studio:estimate-cost', (_, resolution?: GenerationRequest['resolution']): number => {
-    return estimateCost(resolution);
+  ipcMain.handle('studio:estimate-cost', (_, resolution?: GenerationRequest['resolution'], model?: GenerationRequest['model']): number => {
+    return estimateCost(resolution, model);
   });
 
   ipcMain.handle('studio:shell:open-external', (_, url: string): Promise<void> => {

@@ -33,7 +33,7 @@ const studioApi = {
   pauseQueue: () => ipcRenderer.invoke('studio:queue:pause'),
   resumeQueue: () => ipcRenderer.invoke('studio:queue:resume'),
   cancelQueueJob: (jobId: string) => ipcRenderer.invoke('studio:queue:cancel', jobId),
-  estimateCost: (resolution?: string) => ipcRenderer.invoke('studio:estimate-cost', resolution),
+  estimateCost: (resolution?: string, model?: string) => ipcRenderer.invoke('studio:estimate-cost', resolution, model),
   getSessionCost: (windowName: 'day' | 'month' | 'all' = 'day') =>
     ipcRenderer.invoke('studio:usage:session-cost', windowName),
   openExternal: (url: string) => ipcRenderer.invoke('studio:shell:open-external', url),
